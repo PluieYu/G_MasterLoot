@@ -32,9 +32,10 @@ function MasterLootFrame:CreateFrame(level, value)
     if level == 1 then
         self:CreateItem()
         ------------------------------------
-        local SelectUnite = MasterLoot.db.profile.SelectUnite
         self:CreateUnitDropDown("player")
-        self:CreateUnitDropDown(SelectUnite)
+        for i, SelectUnite in MasterLoot.opt.PriorityList do
+            self:CreateUnitDropDown(SelectUnite)
+        end
         ------------------------------------
         self:GetEligibleCandidateIndexList()
         self:GetEligibleCandidateByClass()
@@ -69,7 +70,7 @@ function MasterLootFrame:CreateItem()
                     end)
 end
 function MasterLootFrame:StartRoll(LootItemLink)
-    local message =  string.format("%s 1许愿 2需求 3贪婪", LootItemLink )
+    local message =  string.format(L["开始ROLL"], LootItemLink )
     SendChatMessage(message, self.channelChat)
 end
 
@@ -104,12 +105,6 @@ function MasterLootFrame:GetEligibleCandidateIndexList()
         if name then
             MasterLootCandidateIndex = i
             RaidRosterIndex = GetRaidRosterIndex(name)
-            --for ii = 1, GetNumRaidMembers() do
-            --    if GetRaidRosterInfo(ii) == name then
-            --        RaidRosterIndex = ii
-            --        break
-            --    end
-            --end
             MasterLoot:LevelDebug(2,
                     format("EligibleCandidateIndexList insert <%s=%s> for %s",
                             tostring(RaidRosterIndex), tostring(MasterLootCandidateIndex),tostring(name)))
@@ -181,7 +176,7 @@ end
 ----------------------------------------------------------------------
 function MasterLootFrame:CreateRandomRollDropDown()
     self.DropDown:AddLine(
-            'text', L["全团随机roll"],
+            'text', L["全团随机分配"],
             'icon', "Interface\\Buttons\\UI-GroupLoot-Dice-Up",
             'iconWidth', 20,
             'iconHeight', 20,
@@ -268,7 +263,7 @@ end
 
 ----------------------------------------------------------------------
 function MasterLootFrame:GiveLootToCandidate(
-        mode, _, targetMLCIndex, targetNameWithColors, targetClassWithColors )
+        mode,targetRosterIndex, targetMLCIndex, targetNameWithColors, targetClassWithColors )
     --targetRosterIndex
     if mode==L["偷偷分给"] then
         GiveMasterLoot(LootFrame.selectedSlot, targetMLCIndex)
@@ -284,7 +279,6 @@ function MasterLootFrame:GiveLootToCandidate(
                     )
             )
     )
-
-    SendChatMessage(message, self.channelChat)
     GiveMasterLoot(LootFrame.selectedSlot, targetMLCIndex)
+    SendChatMessage(message, self.channelChat)
 end

@@ -11,11 +11,69 @@ local L = AceLibrary("AceLocale-2.2"):new("MasterLoot")
 local _G = getfenv(0)
 
 
+MasterLoot.hasIcon = "Interface\\Buttons\\UI-GroupLoot-Dice-Up"
+MasterLoot.defaultMinimapPosition = 270
+MasterLoot.hideWithoutStandby = true
+MasterLoot.options = {
+    type = "group",
+    args = {
+        AutoLootToggle = {
+            type = "toggle",
+            name = L["通通归我"],
+            desc = L["通通归我描述"],
+            order = 1,
+            get = function() return  MasterLoot:GetAutoLoot() end,
+            set = function() MasterLoot:SetAutoLoot() end,
+        },
+        AutoRRToggle = {
+            type = "toggle",
+            name = L["随机分配"],
+            desc = L["随机分配描述"],
+            order = 2,
+            get = function() return MasterLoot:GetAutoRR() end,
+            set = function() MasterLoot:SetAutoRR() end,
+        },
+        AddTargetExecute = {
+            type = "execute",
+            name = L["添加目标"],
+            desc = L["添加目标描述"],
+            order = 3,
+            func = function() MasterLoot:AddTargetToPriorityList() end,
+        },
+        ShowPriorityList = {
+            type = "execute",
+            name = L["显示列表"],
+            desc = L["显示列表描述"],
+            order = 4,
+            func = function() MasterLoot:ShowPriorityList() end,
+        },
+        CleanPriorityList = {
+            type = "execute",
+            name = L["清除列表"],
+            desc = L["清除列表描述"],
+            order = 5,
+            func = function() MasterLoot:CleanPriorityList()  end,
+        },
 
+
+
+
+
+    }
+}
 function MasterLoot:OnInitialize()
     self:SetDebugLevel(3)
     self:SetDebugging(true)
     self:RegisterDB("MasterLootDB")
+    self:RegisterDefaults("profile", {
+        PriorityList = {},
+        AutoLoot = false,
+        AutoRR = false,
+    })
+    self:OnProfileEnable()
+    self.OnMenuRequest = MasterLoot.options
+    self:RegisterChatCommand({"/ML", "/MasterLoot"}, MasterLoot.options)
+    DEFAULT_CHAT_FRAME:AddMessage(string.format("%s : %s", L["小皮箱队长分配助手"], L["已加载"]))
 end
 
 function MasterLoot:OnProfileEnable()
@@ -40,14 +98,19 @@ end
     --self:RegisterEvent("")
 
 function MasterLoot:OnEvent(event)
+
     local method, id = GetLootMethod()
     if method ~= 'master' or id ~= 0 then
         return self.hooks.LootFrame_OnEvent(event)
     end
     if event == "OPEN_MASTER_LOOT_LIST" then
-        MasterLootFrame:SetupFrame()
-        return
+        return MasterLootFrame:SetupFrame()
+
+    elseif event == "UPDATE_MASTER_LOOT_LIST" then
+        return MasterLootFrame.DropDown:Refresh(1)
     end
+
+
     return self.hooks.LootFrame_OnEvent(event)
 end
 
@@ -55,5 +118,49 @@ function MasterLoot:OnDisable()
 end
 
 
+------------------------------------------
+---Option function
+------------------------------------------
+function MasterLoot:GetAutoLoot()
+    return self.opt.AutoLoot
+end
+function MasterLoot:SetAutoLoot()
+    self.opt.AutoLoot = not self.opt.AutoLoot
+    if self.opt.AutoLoot and self.opt.AutoRR then
+        self.opt.AutoRR = not self.opt.AutoRR
+    end
+    local message = string.format("%s:%s", L["通通归我"], self.opt.AutoLoot==true and L["已开启"] or L["已关闭"] )
+    self:Print(message)
+end
+function MasterLoot:GetAutoRR()
+    return self.opt.AutoRR
+end
+function MasterLoot:SetAutoRR()
+    self.opt.AutoRR = not self.opt.AutoRR
+    if self.opt.AutoRR and self.opt.AutoLoot then
+        self.opt.AutoLoot = not self.opt.AutoLoot
+    end
+    local message = string.format("%s:%s", L["随机分配"], self.opt.AutoRR==true and L["已开启"] or L["已关闭"] )
+    self:Print(message)
+end
 
+function MasterLoot:AddTargetToPriorityList()
+    local targetName = UnitName("target")
+    if not targetName then
+        self:Print(L["你必须有目标"])
+        return
+    end
+    table.insert(self.opt.PriorityList, targetName)
+    local message = string.format(L["已添加到快捷分配列表"],targetName)
+    self:Print(message)
+end
 
+function MasterLoot:ShowPriorityList()
+    local PriorityNames =  table.concat(self.opt.PriorityList ,", ")
+    local message = string.format(L["快捷分配列表名单"],PriorityNames)
+    self:Print(message)
+end
+function MasterLoot:CleanPriorityList()
+    self.opt.PriorityList = {}
+    self:Print(L["快捷分配列表已重置"])
+end
