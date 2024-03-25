@@ -1,0 +1,13 @@
+## Interface: 11200
+## Title: |CFFFF6060[xiaopixiang]|R|CFF9482C9[RAID]|R|cffF5F54AAMasterLoot
+## Notes: |CFFFF8080xiaopixiang MasterLoot
+## Title-zhCN:|CFFFF6060[小皮箱]|R|CFF9482C9[团队]|R|cffF5F54A分配助手
+## Notes-zhCN:|CFFFF8080这是专门为小皮箱定制的队长分配助手。
+## Author: YU
+## Version: 1.0.0
+## SavedVariables: MasterLootDB
+## DefaultState: Enabled
+## LoadOnDemand: 0
+Locale-zhCN.lua
+MasterLootFrame.lua
+MasterLoot.lua
