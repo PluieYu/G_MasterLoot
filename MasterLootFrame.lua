@@ -33,7 +33,7 @@ function MasterLootFrame:CreateFrame(level, value)
         self:CreateItem()
         ------------------------------------
         self:CreateUnitDropDown("player")
-        for i, SelectUnite in MasterLoot.opt.PriorityList do
+        for _, SelectUnite in MasterLoot.opt.PriorityList do
             self:CreateUnitDropDown(SelectUnite)
         end
         ------------------------------------
@@ -263,7 +263,7 @@ end
 
 ----------------------------------------------------------------------
 function MasterLootFrame:GiveLootToCandidate(
-        mode,targetRosterIndex, targetMLCIndex, targetNameWithColors, targetClassWithColors )
+        mode, _, targetMLCIndex, targetNameWithColors, targetClassWithColors )
     --targetRosterIndex
     if mode==L["偷偷分给"] then
         GiveMasterLoot(LootFrame.selectedSlot, targetMLCIndex)
