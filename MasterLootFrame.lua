@@ -28,12 +28,13 @@ function MasterLootFrame:SetupFrame()
             'cursorY', true
             )
 end
-
 function MasterLootFrame:CreateFrame(level, value)
     if level == 1 then
         self:CreateItem()
-        self:CreateSelfDropDown()
-        self:CreateUnitDropDown()
+        ------------------------------------
+        local SelectUnite = MasterLoot.db.profile.SelectUnite
+        self:CreateUnitDropDown("player")
+        self:CreateUnitDropDown(SelectUnite)
         ------------------------------------
         self:GetEligibleCandidateIndexList()
         self:GetEligibleCandidateByClass()
@@ -73,27 +74,21 @@ function MasterLootFrame:StartRoll(LootItemLink)
 end
 
 ----------------------------------------------------------------------
-function MasterLootFrame:CreateUnitDropDown()
+function MasterLootFrame:CreateUnitDropDown(inputName)
+    if not inputName then return end
+    local UnitNameText = inputName == "player" and self.playerName or inputName
+    local UnitMLCIndec = GetMasterLootCandidateIndex(UnitNameText)
+    UnitNameText = inputName == "player" and L["自己"] or inputName
+
     self.DropDown:AddLine(
-            'text', "|cFFBBBBBB"..L["分给自己"],
+            'text', "|cFFBBBBBB"..L["偷偷分给"]..UnitNameText,
             'icon', "Interface\\GossipFrame\\VendorGossipIcon",
             'iconWidth', 20,
             'iconHeight', 20,
             'closeWhenClicked', true,
             'func', function()
-                self:GiveLootToCandidate(L["分给自己"])
-             end)
-end
-function MasterLootFrame:CreateSelfDropDown()
-    self.DropDown:AddLine(
-            'text', "|cFFBBBBBB"..L["分给自己"],
-            'icon', "Interface\\GossipFrame\\VendorGossipIcon",
-            'iconWidth', 20,
-            'iconHeight', 20,
-            'closeWhenClicked', true,
-            'func', function()
-                self:GiveLootToCandidate(L["分给自己"])
-             end)
+                self:GiveLootToCandidate(L["偷偷分给"],nil, UnitMLCIndec)
+            end)
 end
 ----------------------------------------------------------------------
 function MasterLootFrame:GetEligibleCandidateIndexList()
@@ -254,35 +249,32 @@ end
 ----------------------------------------------------------------------
 function MasterLootFrame:CreateClassListPlayerDropDown(value)
     for _, v in value do
-        local CandidateRosterIndex = v[1]
-        local CandidateMLIndex = v[2]
+        local CandidateRRosterIndex = v[1]
+        local CandidateMLCIndex = v[2]
         local CandidateWithColors = v[3]
-        local CandidateClass = self:GetClassNameWithColors(CandidateRosterIndex)
+        local CandidateClass = self:GetClassNameWithColors(CandidateRRosterIndex)
         self.DropDown:AddLine(
                 'text', CandidateWithColors,
                 'closeWhenClicked', true,
                 'tooltipFunc', GameTooltip.SetUnit,
                 'tooltipArg1', GameTooltip ,
-                'tooltipArg2',self.prefix..CandidateMLIndex ,
+                'tooltipArg2',self.prefix..CandidateMLCIndex ,
                 'func', function()
                     self:GiveLootToCandidate(
-                            L["定向获胜"], CandidateRosterIndex, CandidateMLIndex, CandidateWithColors, CandidateClass)
+                            L["定向获胜"], CandidateRRosterIndex, CandidateMLCIndex, CandidateWithColors, CandidateClass)
                 end)
     end
 end
 
 ----------------------------------------------------------------------
 function MasterLootFrame:GiveLootToCandidate(
-        mode, _, targetMLIndex, targetNameWithColors, targetClassWithColors )
+        mode, _, targetMLCIndex, targetNameWithColors, targetClassWithColors )
     --targetRosterIndex
-    if mode==L["分给自己"] then
-        for i = 1, 40 do
-            if self.playerName == GetMasterLootCandidate(i) then
-                GiveMasterLoot(LootFrame.selectedSlot, i)
-                return
-            end
-        end
+    if mode==L["偷偷分给"] then
+        GiveMasterLoot(LootFrame.selectedSlot, targetMLCIndex)
+        return
     end
+
     local message =  string.format("%s  %s",
             L["小皮箱队长分配助手"],
             string.format(tostring(mode),
@@ -294,5 +286,5 @@ function MasterLootFrame:GiveLootToCandidate(
     )
 
     SendChatMessage(message, self.channelChat)
-    GiveMasterLoot(LootFrame.selectedSlot, targetMLIndex)
+    GiveMasterLoot(LootFrame.selectedSlot, targetMLCIndex)
 end
