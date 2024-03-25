@@ -9,12 +9,14 @@ MasterLootFrame.DropDown = AceLibrary("Dewdrop-2.0")
 
 ----- Menu exhibition -----
 function MasterLootFrame:SetupFrame()
-    local icon, name, quantity, quality = GetLootSlotInfo(LootFrame.selectedSlot)
-    if quality < 1 then
-        GiveMasterLoot(LootFrame.selectedSlot,  self:GetMLID(UnitName("player")))
-        return
-    end
-
+    --local icon, name, quantity, quality = GetLootSlotInfo(LootFrame.selectedSlot)
+    --if quality < 1 then
+    --    GiveMasterLoot(LootFrame.selectedSlot,  self:GetMLID(UnitName("player")))
+    --    return
+    --end
+    self.isRaid =  GetNumRaidMembers() > 0 and true or false
+    self.prefix =  self.isRaid  and "raid" or "party"
+    self.channelChat = self.isRaid and "RAID" or "PARTY"
     self.DropDown:Open(
             UIParent,
             'children',
@@ -30,22 +32,26 @@ function MasterLootFrame:CreateFrame(level, value)
     if level == 1 then
         self:CreateItem()
         self:CreateSelfDropDown()
+        ------------------------------------
+        self:GetEligibleCandidateIndexList()
+        self:GetEligibleCandidateByClass()
+        ------------------------------------
         self:CreateRandomRollDropDown()
-        local classList = self:ScranCandidateList()
+        ------------------------------------
         self:CreateClassListDropDown(classList)
     elseif level == 2 then
         self:CreateClassListPlayerDropDown(value)
     end
 end
-
-
+----------------------------------------------------------------------
 function LinkToID(link)
     if not link then return nil end
     return string.gsub(link,".-\124H([^\124]*)\124h.*", "%1")
 end
 function MasterLootFrame:CreateItem()
     local icon, name, quantity, quality = GetLootSlotInfo(LootFrame.selectedSlot)
-    local link = LinkToID(GetLootSlotLink(LootFrame.selectedSlot))
+    local LootSlotLink = GetLootSlotLink(LootFrame.selectedSlot)
+    local link = LinkToID(LootSlotLink)
     if not link then return nil end
     self.DropDown:AddLine(
             'text', string.format("%s%s%s|r", tonumber(quantity) > 1 and tostring(quantity).."x" or "", ITEM_QUALITY_COLORS[quality].hex, name),
@@ -54,52 +60,17 @@ function MasterLootFrame:CreateItem()
             'iconHeight', 20,
             'tooltipFunc', GameTooltip.SetHyperlink,
             'tooltipArg1', GameTooltip ,
-            'tooltipArg2', link )
-    self.selectedSlotItemLink = link
-
+            'tooltipArg2', link,
+            'func', function()
+                        self:StartRoll(LootSlotLink)
+                    end)
+end
+function MasterLootFrame:StartRoll(LootItemLink)
+    local message =  string.format("%s 1许愿 2需求 3贪婪", LootItemLink )
+    SendChatMessage(message, self.channelChat)
 end
 
-
-
-
-
-function MasterLootFrame:ScranCandidateList()
-    local classList = {}
-    local NumMembers = GetNumRaidMembers()
-    if NumMembers then
-        self.prefix = "raid"
-        NumMembers = 40
-    else
-        NumMembers = GetNumPartyMembers()
-        self.prefix = "party"
-    end
-
-    for i = 1, NumMembers do
-        local classNameColored, targetNameColored = self:GetClassNameWithColors(self.prefix..i)
-        if classNameColored and targetNameColored then
-            if not classList[classNameColored] then
-                classList[classNameColored] = {}
-            end
-            --MasterLoot:LevelDebug(2, format("table.insert ii: <%s>", tostring(ii)))
-            table.insert(classList[classNameColored], i , targetNameColored)
-        end
-    end
-    return classList
-end
-
-
-function MasterLootFrame:CreateRandomRollDropDown()
-
-    self.DropDown:AddLine(
-            'text', L["全团随机roll"],
-            'icon', "Interface\\Buttons\\UI-GroupLoot-Dice-Up",
-            'iconWidth', 20,
-            'iconHeight', 20,
-            'func', function() self:GiveLootToCandidate("rr") end)
-
-end
-
-
+----------------------------------------------------------------------
 function MasterLootFrame:CreateSelfDropDown()
     self.DropDown:AddLine(
             'text', "|cFFBBBBBB"..L["分给自己"],
@@ -108,18 +79,171 @@ function MasterLootFrame:CreateSelfDropDown()
             'iconHeight', 20,
             'closeWhenClicked', true,
             'func', function()
-                self:GiveLootToCandidate("self",UnitName("player")) end)
-end
+                self:GiveLootToCandidate("self", UnitName("player"))
 
-function MasterLootFrame:CreateClassListDropDown(classListTab)
-    for k, v in classListTab do
+             end)
+end
+----------------------------------------------------------------------
+function MasterLootFrame:GetEligibleCandidateIndexList()
+    --[[
+    EligibleCandidateIndexList(key, value)
+    key = RaidRosterIndex Which use to get GetRaidRosterInfo(value) max=GetNumRaidMembers()
+    value = MasterLootCandidateIndex  witch use to get GetMasterLootCandidate(key) also is "raid"..key
+    ]]
+    self.EligibleCandidateIndexList = {}
+    local RaidRosterIndex, MasterLootCandidateIndex
+    for i = 1, 40 do
+        local name = GetMasterLootCandidate(i)
+        if name then
+            MasterLootCandidateIndex = i
+            for ii = 1, GetNumRaidMembers() do
+                if GetRaidRosterInfo(ii) == name then
+                    RaidRosterIndex = ii
+                    break
+                end
+            end
+            MasterLoot:LevelDebug(2,
+                    format("EligibleCandidateIndexList insert <%s=%s> for %s",
+                            tostring(RaidRosterIndex), tostring(MasterLootCandidateIndex),tostring(name)))
+            table.insert(self.EligibleCandidateIndexList, RaidRosterIndex, MasterLootCandidateIndex)
+        end
+    end
+end
+function MasterLootFrame:GetEligibleCandidateByClass()
+    self.EligibleCandidateByClass = {}
+    for i, v in self.EligibleCandidateIndexList do
+        local classNameColored, targetNameColored = self:GetClassNameWithColors(i)
+        if classNameColored and targetNameColored then
+            if not self.EligibleCandidateByClass[classNameColored] then
+                self.EligibleCandidateByClass[classNameColored] = {}
+            end
+            local ECBC_ELEMENT = {i,v,targetNameColored}
+            MasterLoot:LevelDebug(2,
+                    format("EligibleCandidateByClass[%s] insert <%s,%s,%s> ",
+                            tostring(classNameColored), tostring(ECBC_ELEMENT[1]), tostring(ECBC_ELEMENT[2]), tostring(ECBC_ELEMENT[3])
+                            )
+            )
+            table.insert(self.EligibleCandidateByClass[classNameColored], ECBC_ELEMENT)
+        end
+    end
+end
+function MasterLootFrame:GetClassNameWithColors(Index)
+    --[[
+    Index is the index for GetRaidRosterInfo max=GetNumRaidMembers()
+    ]]
+    MasterLoot:LevelDebug(2,
+            format("GetClassNameWithColors with %s", tostring(Index)))
+    local name, class, fileName, _
+    if self.isRaid then
+        name, _, _, _, class, fileName, _, _ = GetRaidRosterInfo(Index)
+    else
+        name = UnitName(self.prefix..Index)
+        class, fileName = UnitClass(self.prefix..Index)
+    end
+    MasterLoot:LevelDebug(2,
+            format("GetRaidRosterInfo name=%s, class=%s, fileName=%s ",
+                    tostring(name),tostring(class),tostring(fileName)))
+    if not name then
+        return
+    end
+    local c = RAID_CLASS_COLORS[fileName]
+    local classhexe = string.format("%2x%2x%2x", c.r*255, c.g*255, c.b*255)
+    local classNameWithColors = string.format("|cff%s%s|r",  classhexe,  class)
+    local targetNameWithColors = string.format("|cff%s%s|r",  classhexe, name)
+    return classNameWithColors, targetNameWithColors
+end
+----------------------------------------------------------------------
+function MasterLootFrame:CreateRandomRollDropDown()
+    self.DropDown:AddLine(
+            'text', L["全团随机roll"],
+            'icon', "Interface\\Buttons\\UI-GroupLoot-Dice-Up",
+            'iconWidth', 20,
+            'iconHeight', 20,
+            'closeWhenClicked', true,
+            'func', function() self:GiveLootToRandomCandidate() end)
+end
+function MasterLootFrame:GiveLootToRandomCandidate()
+    local maxiNumRaidMembers = GetTableSize(self.EligibleCandidateIndexList)
+    --local lastRRtime = GetTime()
+    local RandomCandidateframe = CreateFrame("frame")
+    RandomCandidateframe:RegisterEvent("CHAT_MSG_SYSTEM")
+    RandomCandidateframe:SetScript("OnEvent", function()
+        --if GetTime() - lastRRtime > 5 then return end
+        local startRollIndex = string.find(arg1,"%d+")
+        local _, endRollIndex = string.find(arg1, "%d+", startRollIndex)
+        local roll = tonumber(string.sub(arg1, startRollIndex, endRollIndex))
+
+        local winnerRaidRosterIndex, winnerRaidIndex = GetTableElement(self.EligibleCandidateIndexList,roll)
+        local winnerClass, winnerName = self:GetClassNameWithColors(winnerRaidRosterIndex)
+        MasterLoot:LevelDebug(2,
+                format("RaidRoll winner is  : <%s // %s> at position  %s",
+                        tostring(winnerClass), tostring(winnerName), tostring(winnerRaidIndex)))
+        self:GiveLootToCandidate("rr", winnerName, winnerRaidIndex)
+        RandomCandidateframe:UnregisterAllEvents()
+    end)
+    RandomRoll(1, maxiNumRaidMembers)
+
+end
+function MasterLootFrame:GetRaidIRollWinner(rollGet)
+    local index, naame = GetTableElement(rollGet)
+    MasterLoot:LevelDebug(2, format("RR naame  got : <%s> ", tostring(naame)))
+    local winnerName = GetMasterLootCandidate(index)
+    MasterLoot:LevelDebug(2, format("RR winnerName  got : <%s> ", tostring(winnerName)))
+    if  winnerName ~= naame then
+        return
+    end
+    return winnerName, index
+end
+function GetTableSize(T)
+    local count = 0
+    for _ in pairs(T) do
+        count = count + 1
+    end
+    return count
+end
+function GetTableElement(T,PO)
+    local count = 0
+    for i, v in T do
+        count = count + 1
+        if count == PO then
+            return i, v
+        end
+    end
+end
+----------------------------------------------------------------------
+function MasterLootFrame:GiveLootToCandidate(mode, CName, CandidateIndex )
+    local indexForLoot
+    if not CandidateIndex then
+        for i = 1, 40 do
+            local name = GetMasterLootCandidate(i)
+            if CName == name then
+                indexForLoot = i
+                break
+            end
+        end
+    else
+        indexForLoot = CandidateIndex
+    end
+     -- GetNumRaidMembers() > 0 and UnitName("raid"..indexForLoot) or UnitName("party"..indexForLoot)
+    if mode == "rr" then
+        local message =  string.format("%s 全团随机roll 恭喜 %s 获胜", GetLootSlotLink(LootFrame.selectedSlot), CName)
+        SendChatMessage(message, self.channelChat)
+    elseif mode == "winner" then
+        local message =  string.format(" 恭喜 %s 获得 %s", CName, GetLootSlotLink(LootFrame.selectedSlot) )
+        SendChatMessage(message, self.channelChat)
+    end
+    GiveMasterLoot(LootFrame.selectedSlot, indexForLoot)
+end
+----------------------------------------------------------------------
+function MasterLootFrame:CreateClassListDropDown()
+    for k, v in self.EligibleCandidateByClass do
         self.DropDown:AddLine(
                 'text', k,
                 'hasArrow', true,
                 'value', v)
     end
 end
-
+----------------------------------------------------------------------
 function MasterLootFrame:CreateClassListPlayerDropDown(value)
     for k, v in value do
         local CandidateName = v
@@ -136,102 +260,95 @@ function MasterLootFrame:CreateClassListPlayerDropDown(value)
     end
 end
 
-function MasterLootFrame:GiveLootToCandidate(mode, CName, CandidateIndex )
-
-    local indexForLoot
-    if CandidateIndex then
-        indexForLoot = self:GetMLID(UnitName(CandidateIndex))
-    elseif CName then
-        indexForLoot = self:GetMLID(CName)
-    else
-        local RName, RIndex = self:GetRandomMLID()
-        indexForLoot = self:GetMLID(RName)
-    end
-    if not indexForLoot then
-        MasterLoot:Print(CName .. L["没有拾取权"] )
-        return
-    end
-
-    local nameForLoot = GetNumRaidMembers() > 0 and UnitName("raid"..indexForLoot) or UnitName("party"..indexForLoot)
-
-
-    local channnel = GetNumRaidMembers() > 0 and "RAID" or "PARTY"
-    if mode == "rr" then
-        local message =  string.format("%s 全团随机roll 恭喜 %s 获胜", GetLootSlotLink(LootFrame.selectedSlot), nameForLoot)
-        SendChatMessage(message, channnel)
-    elseif mode == "winner" then
-        local message =  string.format(" 恭喜 %s 获得 %s", nameForLoot, GetLootSlotLink(LootFrame.selectedSlot) )
-        SendChatMessage(message, channnel)
-    end
-
-        GiveMasterLoot(LootFrame.selectedSlot, indexForLoot)
-    end
-
-function MasterLootFrame:GetRandomMLID()
-    local max = GetNumRaidMembers() > 0 and 40 or 5
-    local name, id
-    while not name do
-        id = math.random(1, max)
-        name = GetMasterLootCandidate(id)
-    end
-    return name, id
-end
 
 
 
 
-function MasterLootFrame:GetMLID(name)
-    if GetNumRaidMembers() > 0 then
-        for i = 1, 40 do
-            if GetMasterLootCandidate(i) == name then
-                return i
-            end
-        end
-    elseif GetNumPartyMembers() > 0 then
-        for i = 1, MAX_PARTY_MEMBERS+1 do
-            if GetMasterLootCandidate(i) == name then
-                return i
-            end
-        end
-    end
-    return nil
-end
 
-function MasterLootFrame:GetRaidIndex(name)
-    if GetNumRaidMembers() > 0 then
-        for i = 1, 40 do
-            if GetMasterLootCandidate(i) == name then
-                return "raid"..i
-            end
-        end
-    elseif GetNumPartyMembers() > 0 then
-        for i = 1, MAX_PARTY_MEMBERS+1 do
-            if GetMasterLootCandidate(i) == name then
-                return "party"..i
-            end
-        end
-    end
-    return nil
-end
 
-function MasterLootFrame:GetClassNameWithColors(raidIndex)
-    local targetName = UnitName(raidIndex)
-    if not targetName then
-        return
-    end
-    local className, classFilename = UnitClass(raidIndex)
-    local c = RAID_CLASS_COLORS[classFilename]
-    local classhexe = string.format("%2x%2x%2x", c.r*255, c.g*255, c.b*255)
-    local classNameWithColors = string.format("|cff%s%s|r",  classhexe,  className)
-    local targetNameWithColors = string.format("|cff%s%s|r",  classhexe, targetName)
-    return classNameWithColors, targetNameWithColors
-end
 
-function MasterLootFrame:GetUnitNameWithColors(name)
-    local raidIndex = self:GetRaidIndex(name)
-    local className, classFilename = UnitClass(raidIndex)
-    local c = RAID_CLASS_COLORS[classFilename]
-    local classhexe = string.format("%2x%2x%2x", c.r*255, c.g*255, c.b*255)
-    local nameWithColors = string.format("|cff%s%s|r",  classhexe, name)
-    return nameWithColors
-end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--function MasterLootFrame:GetRaidIndexFromCandidateIndex(CandidateIndex)
+--    local winnerName = GetMasterLootCandidate(LootFrame.selectedSlot, CandidateIndex)
+--    MasterLoot:LevelDebug(2, format("RR winnerName  got : <%s> ", tostring(winnerName)))
+--    if GetNumRaidMembers() > 0 then
+--        for i = CandidateIndex, 40 do
+--            local targetName = GetRaidRosterInfo(i)
+--            MasterLoot:LevelDebug(2, format("RR targetName  got : <%s> ", tostring(targetName)))
+--            if  targetName == winnerName then
+--                return winnerName, self.prefix..i
+--            end
+--        end
+--    end
+--end
+--
+--function MasterLootFrame:GetMLID(name)
+--    if GetNumRaidMembers() > 0 then
+--        for i = 1, 40 do
+--            if GetMasterLootCandidate(i) == name then
+--                return i
+--            end
+--        end
+--    elseif GetNumPartyMembers() > 0 then
+--        for i = 1, MAX_PARTY_MEMBERS+1 do
+--            if GetMasterLootCandidate(i) == name then
+--                return i
+--            end
+--        end
+--    end
+--    return nil
+--end
+--
+--function MasterLootFrame:GetRaidIndex(name)
+--    if GetNumRaidMembers() > 0 then
+--        for i = 1, 40 do
+--            if GetMasterLootCandidate(i) == name then
+--                return "raid"..i
+--            end
+--        end
+--    elseif GetNumPartyMembers() > 0 then
+--        for i = 1, MAX_PARTY_MEMBERS+1 do
+--            if GetMasterLootCandidate(i) == name then
+--                return "party"..i
+--            end
+--        end
+--    end
+--    return nil
+--end
+--
+--function MasterLootFrame:GetClassNameWithColors(raidIndex)
+--    local targetName = UnitName(raidIndex)
+--    if not targetName then
+--        return
+--    end
+--    local className, classFilename = UnitClass(raidIndex)
+--    local c = RAID_CLASS_COLORS[classFilename]
+--    local classhexe = string.format("%2x%2x%2x", c.r*255, c.g*255, c.b*255)
+--    local classNameWithColors = string.format("|cff%s%s|r",  classhexe,  className)
+--    local targetNameWithColors = string.format("|cff%s%s|r",  classhexe, targetName)
+--    return classNameWithColors, targetNameWithColors
+--end
+--
+--function MasterLootFrame:GetUnitNameWithColors(name)
+--    local raidIndex = self:GetRaidIndex(name)
+--    local className, classFilename = UnitClass(raidIndex)
+--    local c = RAID_CLASS_COLORS[classFilename]
+--    local classhexe = string.format("%2x%2x%2x", c.r*255, c.g*255, c.b*255)
+--    local nameWithColors = string.format("|cff%s%s|r",  classhexe, name)
+--    return nameWithColors
+--end
