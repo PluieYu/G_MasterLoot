@@ -8,9 +8,6 @@
 MasterLoot = AceLibrary("AceAddon-2.0"):new("AceEvent-2.0","AceModuleCore-2.0","AceComm-2.0","AceDB-2.0","AceDebug-2.0","AceConsole-2.0","FuBarPlugin-2.0", "AceHook-2.1")
 local L = AceLibrary("AceLocale-2.2"):new("MasterLoot")
 
-local _G = getfenv(0)
-
-
 MasterLoot.hasIcon = "Interface\\Buttons\\UI-GroupLoot-Dice-Up"
 MasterLoot.defaultMinimapPosition = 270
 MasterLoot.hideWithoutStandby = true
@@ -63,7 +60,7 @@ MasterLoot.options = {
 }
 function MasterLoot:OnInitialize()
     self:SetDebugLevel(3)
-    self:SetDebugging(true)
+    --self:SetDebugging(true)
     self:RegisterDB("MasterLootDB")
     self:RegisterDefaults("profile", {
         PriorityList = {},
@@ -92,29 +89,29 @@ function MasterLoot:OnEnable()
     --self:LevelDebug(2, format("fileName: <%s>", tostring(fileName)))
     --self:LevelDebug(2, format("zone: <%s>", tostring(zone)))
     --
-
     self:Hook("LootFrame_OnEvent","OnEvent", true)
 end
     --self:RegisterEvent("")
 
 function MasterLoot:OnEvent(event)
-
     local method, id = GetLootMethod()
     if method ~= 'master' or id ~= 0 then
         return self.hooks.LootFrame_OnEvent(event)
     end
-    if event == "OPEN_MASTER_LOOT_LIST" then
+    if event == "LOOT_OPENED"  then
+        MasterLootFrame:AutoFunction()
+    elseif event == "OPEN_MASTER_LOOT_LIST" then
         return MasterLootFrame:SetupFrame()
-
     elseif event == "UPDATE_MASTER_LOOT_LIST" then
         return MasterLootFrame.DropDown:Refresh(1)
     end
-
 
     return self.hooks.LootFrame_OnEvent(event)
 end
 
 function MasterLoot:OnDisable()
+    self.hooks.
+    self:UnregisterAllEvents()
 end
 
 

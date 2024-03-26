@@ -7,6 +7,9 @@ local L = AceLibrary("AceLocale-2.2"):new("MasterLoot")
 MasterLootFrame = {}
 MasterLootFrame.playerName = UnitName("player")
 MasterLootFrame.DropDown = AceLibrary("Dewdrop-2.0")
+MasterLootFrame.isRaid =  GetNumRaidMembers() > 0 and true or false
+MasterLootFrame.prefix =  MasterLootFrame.isRaid  and "raid" or "party"
+MasterLootFrame.channelChat = MasterLootFrame.isRaid and "RAID" or "PARTY"
 
 ----- Menu exhibition -----
 function MasterLootFrame:SetupFrame()
@@ -15,9 +18,7 @@ function MasterLootFrame:SetupFrame()
     --    GiveMasterLoot(LootFrame.selectedSlot,  self:GetMLID(UnitName("player")))
     --    return
     --end
-    self.isRaid =  GetNumRaidMembers() > 0 and true or false
-    self.prefix =  self.isRaid  and "raid" or "party"
-    self.channelChat = self.isRaid and "RAID" or "PARTY"
+
     self.DropDown:Open(
             UIParent,
             'children',
@@ -73,7 +74,6 @@ function MasterLootFrame:StartRoll(LootItemLink)
     local message =  string.format(L["开始ROLL"], LootItemLink )
     SendChatMessage(message, self.channelChat)
 end
-
 ----------------------------------------------------------------------
 function MasterLootFrame:CreateUnitDropDown(inputName)
     if not inputName then return end
@@ -183,7 +183,7 @@ function MasterLootFrame:CreateRandomRollDropDown()
             'closeWhenClicked', true,
             'func', function() self:GiveLootToRandomCandidate() end)
 end
-function MasterLootFrame:GiveLootToRandomCandidate()
+function MasterLootFrame:GiveLootToRandomCandidate(selectedSlot)
     local maxiNumRaidMembers = GetTableSize(self.EligibleCandidateIndexList)
     --local lastRRtime = GetTime()
     local RandomCandidateframe = CreateFrame("frame")
@@ -199,7 +199,7 @@ function MasterLootFrame:GiveLootToRandomCandidate()
         MasterLoot:LevelDebug(2,
                 format("RaidRoll winner is  : <%s // %s> at position  %s",
                         tostring(winnerClass), tostring(winnerName), tostring(winnerRaidIndex)))
-        self:GiveLootToCandidate(L["全团随机获胜"], winnerRaidRosterIndex,winnerRaidIndex, winnerName, winnerClass)
+        self:GiveLootToCandidate(L["全团随机获胜"], winnerRaidRosterIndex,winnerRaidIndex, winnerName, winnerClass, selectedSlot)
         RandomCandidateframe:UnregisterAllEvents()
     end)
     RandomRoll(1, maxiNumRaidMembers)
@@ -263,10 +263,13 @@ end
 
 ----------------------------------------------------------------------
 function MasterLootFrame:GiveLootToCandidate(
-        mode, _, targetMLCIndex, targetNameWithColors, targetClassWithColors )
+        mode, _, targetMLCIndex, targetNameWithColors, targetClassWithColors, selectedSlot)
     --targetRosterIndex
+    local sS = selectedSlot and selectedSlot or LootFrame.selectedSlot
+
+
     if mode==L["偷偷分给"] then
-        GiveMasterLoot(LootFrame.selectedSlot, targetMLCIndex)
+        GiveMasterLoot(sS, targetMLCIndex)
         return
     end
 
@@ -275,10 +278,35 @@ function MasterLootFrame:GiveLootToCandidate(
             string.format(tostring(mode),
                     tostring(targetClassWithColors),
                     tostring(targetNameWithColors),
-                    tostring(GetLootSlotLink(LootFrame.selectedSlot)
+                    tostring(GetLootSlotLink(sS)
                     )
             )
     )
-    GiveMasterLoot(LootFrame.selectedSlot, targetMLCIndex)
+    GiveMasterLoot(sS, targetMLCIndex)
     SendChatMessage(message, self.channelChat)
+end
+
+----------------------------------------------------------------------
+function MasterLootFrame:AutoFunction()
+    for li = 1, GetNumLootItems() do
+        local _, name, quantity, quality = GetLootSlotInfo(li)
+        --MasterLoot:LevelDebug(2,
+        --        format("GetLootSlotInfo: <%s // %s // %s>",
+        --                tostring(name), tostring(quantity), tostring(quality)))
+        local UnitMLCIndec = GetMasterLootCandidateIndex(self.playerName)
+        if  quantity ~=0  then
+            MasterLoot:LevelDebug(2,
+                    format("GetLootSlotInfo: <%s // %s // %s>",
+                            tostring(name), tostring(quantity), tostring(quality)))
+            if  quality <= 1 then
+                if MasterLoot.opt.AutoLoot  then
+                    self:GiveLootToCandidate(L["偷偷分给"],nil, UnitMLCIndec,nil,nil,nil)
+                elseif MasterLoot.opt.AutoRR then
+                    self:GetEligibleCandidateIndexList()
+                    self:GiveLootToRandomCandidate(li)
+                end
+
+            end
+        end
+    end
 end
