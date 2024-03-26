@@ -237,7 +237,6 @@ function GetTableElement(T,PO)
         end
     end
 end
-
 ----------------------------------------------------------------------
 function MasterLootFrame:CreateClassListDropDown()
     for k, v in self.EligibleCandidateByClass do
@@ -291,7 +290,6 @@ function MasterLootFrame:GiveLootToCandidate(
     GiveMasterLoot(sS, targetMLCIndex)
 
 end
-
 ----------------------------------------------------------------------
 function MasterLootFrame:AutoFunction()
     for li = 1, GetNumLootItems() do
