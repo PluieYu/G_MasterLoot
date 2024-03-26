@@ -78,28 +78,25 @@ function MasterLoot:OnProfileEnable()
 end
 
 function MasterLoot:OnEnable()
-
-    --name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(raidIndex)
-    --local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(5)
-    --self:LevelDebug(2, format("name: <%s>", tostring(name)))
-    --self:LevelDebug(2, format("rank: <%s>", tostring(rank)))
-    --self:LevelDebug(2, format("subgroup: <%s>", tostring(subgroup)))
-    --self:LevelDebug(2, format("level: <%s>", tostring(level)))
-    --self:LevelDebug(2, format("class: <%s>", tostring(class)))
-    --self:LevelDebug(2, format("fileName: <%s>", tostring(fileName)))
-    --self:LevelDebug(2, format("zone: <%s>", tostring(zone)))
-    --
+    MasterLootFrame.playerName = UnitName("player")
     self:Hook("LootFrame_OnEvent","OnEvent", true)
 end
-    --self:RegisterEvent("")
 
 function MasterLoot:OnEvent(event)
     local method, id = GetLootMethod()
     if method ~= 'master' or id ~= 0 then
         return self.hooks.LootFrame_OnEvent(event)
     end
+
+    MasterLootFrame.isRaid =  GetNumRaidMembers() > 0 and true or false
+    MasterLootFrame.prefix =  MasterLootFrame.isRaid  and "raid" or "party"
+    MasterLootFrame.channelChat = MasterLootFrame.isRaid and "RAID" or "PARTY"
     if event == "LOOT_OPENED"  then
-        MasterLootFrame:AutoFunction()
+        if self.opt.AutoLoot or self.opt.AutoRR then
+            MasterLoot:LevelDebug(2,
+                    format("ENABLE AUTO FUNC"))
+            MasterLootFrame:AutoFunction()
+        end
     elseif event == "OPEN_MASTER_LOOT_LIST" then
         return MasterLootFrame:SetupFrame()
     elseif event == "UPDATE_MASTER_LOOT_LIST" then

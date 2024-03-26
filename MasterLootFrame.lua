@@ -5,11 +5,8 @@
 ---
 local L = AceLibrary("AceLocale-2.2"):new("MasterLoot")
 MasterLootFrame = {}
-MasterLootFrame.playerName = UnitName("player")
 MasterLootFrame.DropDown = AceLibrary("Dewdrop-2.0")
-MasterLootFrame.isRaid =  GetNumRaidMembers() > 0 and true or false
-MasterLootFrame.prefix =  MasterLootFrame.isRaid  and "raid" or "party"
-MasterLootFrame.channelChat = MasterLootFrame.isRaid and "RAID" or "PARTY"
+
 
 ----- Menu exhibition -----
 function MasterLootFrame:SetupFrame()
@@ -18,7 +15,6 @@ function MasterLootFrame:SetupFrame()
     --    GiveMasterLoot(LootFrame.selectedSlot,  self:GetMLID(UnitName("player")))
     --    return
     --end
-
     self.DropDown:Open(
             UIParent,
             'children',
@@ -106,16 +102,26 @@ function MasterLootFrame:GetEligibleCandidateIndexList()
             MasterLootCandidateIndex = i
             RaidRosterIndex = GetRaidRosterIndex(name)
             MasterLoot:LevelDebug(2,
-                    format("EligibleCandidateIndexList insert <%s=%s> for %s",
+                    format("GetEligibleCandidateIndexList insert <%s=%s> for %s",
                             tostring(RaidRosterIndex), tostring(MasterLootCandidateIndex),tostring(name)))
             table.insert(self.EligibleCandidateIndexList, RaidRosterIndex, MasterLootCandidateIndex)
         end
     end
 end
 function GetRaidRosterIndex(name)
-    for i = 1, GetNumRaidMembers() do
-        if GetRaidRosterInfo(i) == name then
-            return i
+    if MasterLootFrame.isRaid then
+        for i = 1, GetNumRaidMembers() do
+            if GetRaidRosterInfo(i) == name then
+                return i
+            end
+        end
+    elseif name == MasterLootFrame.playerName then
+        return 5
+    else
+        for i = 1, 4 do
+            if UnitName(MasterLootFrame.prefix..i) == name then
+                return i
+            end
         end
     end
 end
@@ -130,7 +136,6 @@ function MasterLootFrame:GetEligibleCandidateByClass()
     --[[
     EligibleCandidateByClass[classNameColored] =  {RaidRosterIndex,MasterLootCandidateIndex,targetNameColored}
     ]]
-
     self.EligibleCandidateByClass = {}
     for i, v in self.EligibleCandidateIndexList do
         local classNameColored, targetNameColored = self:GetClassNameWithColors(i)
@@ -140,7 +145,7 @@ function MasterLootFrame:GetEligibleCandidateByClass()
             end
             local ECBC_ELEMENT = {i,v,targetNameColored}
             MasterLoot:LevelDebug(2,
-                    format("EligibleCandidateByClass[%s] insert <%s,%s,%s> ",
+                    format("GetEligibleCandidateByClass[%s] insert <%s,%s,%s> ",
                             tostring(classNameColored), tostring(ECBC_ELEMENT[1]), tostring(ECBC_ELEMENT[2]), tostring(ECBC_ELEMENT[3])
                             )
             )
@@ -148,18 +153,19 @@ function MasterLootFrame:GetEligibleCandidateByClass()
         end
     end
 end
-function MasterLootFrame:GetClassNameWithColors(Index)
+function MasterLootFrame:GetClassNameWithColors(RosterIndex)
     --[[
     Index is the index for GetRaidRosterInfo max=GetNumRaidMembers()
     ]]
     MasterLoot:LevelDebug(2,
-            format("GetClassNameWithColors with %s", tostring(Index)))
+            format("GetClassNameWithColors with (%s)", tostring(RosterIndex)))
     local name, class, fileName, _
     if self.isRaid then
-        name, _, _, _, class, fileName, _, _ = GetRaidRosterInfo(Index)
+        name, _, _, _, class, fileName, _, _ = GetRaidRosterInfo(RosterIndex)
     else
-        name = UnitName(self.prefix..Index)
-        class, fileName = UnitClass(self.prefix..Index)
+        local partyIndex = RosterIndex==5 and "player" or self.prefix..RosterIndex
+        name = UnitName(partyIndex)
+        class, fileName = UnitClass(partyIndex)
     end
     MasterLoot:LevelDebug(2,
             format("GetRaidRosterInfo name=%s, class=%s, fileName=%s ",
@@ -272,7 +278,6 @@ function MasterLootFrame:GiveLootToCandidate(
         GiveMasterLoot(sS, targetMLCIndex)
         return
     end
-
     local message =  string.format("%s  %s",
             L["小皮箱队长分配助手"],
             string.format(tostring(mode),
@@ -282,30 +287,28 @@ function MasterLootFrame:GiveLootToCandidate(
                     )
             )
     )
-    GiveMasterLoot(sS, targetMLCIndex)
     SendChatMessage(message, self.channelChat)
+    GiveMasterLoot(sS, targetMLCIndex)
+
 end
 
 ----------------------------------------------------------------------
 function MasterLootFrame:AutoFunction()
     for li = 1, GetNumLootItems() do
         local _, name, quantity, quality = GetLootSlotInfo(li)
-        --MasterLoot:LevelDebug(2,
-        --        format("GetLootSlotInfo: <%s // %s // %s>",
-        --                tostring(name), tostring(quantity), tostring(quality)))
         local UnitMLCIndec = GetMasterLootCandidateIndex(self.playerName)
+
         if  quantity ~=0  then
             MasterLoot:LevelDebug(2,
                     format("GetLootSlotInfo: <%s // %s // %s>",
                             tostring(name), tostring(quantity), tostring(quality)))
             if  quality <= 1 then
-                if MasterLoot.opt.AutoLoot  then
-                    self:GiveLootToCandidate(L["偷偷分给"],nil, UnitMLCIndec,nil,nil,nil)
+                if MasterLoot.opt.AutoLoot then
+                    self:GiveLootToCandidate(L["偷偷分给"],nil, UnitMLCIndec,nil,nil,li)
                 elseif MasterLoot.opt.AutoRR then
                     self:GetEligibleCandidateIndexList()
                     self:GiveLootToRandomCandidate(li)
                 end
-
             end
         end
     end
