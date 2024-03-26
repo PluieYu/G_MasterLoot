@@ -51,11 +51,6 @@ MasterLoot.options = {
             order = 5,
             func = function() MasterLoot:CleanPriorityList()  end,
         },
-
-
-
-
-
     }
 }
 function MasterLoot:OnInitialize()
@@ -107,7 +102,7 @@ function MasterLoot:OnEvent(event)
 end
 
 function MasterLoot:OnDisable()
-    self.hooks.
+    self:UnhookAll()
     self:UnregisterAllEvents()
 end
 
