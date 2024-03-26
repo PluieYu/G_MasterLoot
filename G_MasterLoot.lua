@@ -97,7 +97,7 @@ function MasterLoot:OnEvent(event)
     elseif event == "UPDATE_MASTER_LOOT_LIST" then
         return MasterLootFrame.DropDown:Refresh(1)
     end
-
+    collectgarbage()
     return self.hooks.LootFrame_OnEvent(event)
 end
 
