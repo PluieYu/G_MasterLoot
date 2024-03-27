@@ -28,7 +28,7 @@ L:RegisterTranslations("zhCN", function() return {
 
 
 
-	["开始ROLL"] = "|cffF5F54A》》》|r%s|cffF5F54A《《《|r 许愿打|cffffffff[1]|r 需求打|cffffffff[2]|r 贪婪打|cffffffff[3]|r",
+	["开始ROLL"] = "|cffF5F54A《|r%s|cffF5F54A》|r 许愿打|cffffffff[1]|r 需求打|cffffffff[2]|r 贪婪打|cffffffff[3]|r",
 	["偷偷分给"] = "偷偷分给",
 	["自己"] = "自己",
 

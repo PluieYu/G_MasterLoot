@@ -136,7 +136,6 @@ function MasterLootFrame:StartRoll(LootItemLink)
 end
 function MasterLootFrame:GetRandomCandidate(li)
     local ECNL,MN = self:GetECNL()
-
     local RCF = CreateFrame("frame")
     RCF:RegisterEvent("CHAT_MSG_SYSTEM")
     RCF:SetScript("OnEvent", function()
@@ -151,7 +150,6 @@ function MasterLootFrame:GetRandomCandidate(li)
         end
         this:UnregisterAllEvents()
         lastRRtime = GetTime()
-
     end )
     if GetTime() - self.lastRRtime < 1 then return end
     RandomRoll(1, MN)
@@ -203,20 +201,32 @@ function MasterLootFrame:ReformECNLBC(CandidateNameList)
     local CON = {} --ClassOnName
     local ECNLBC = {}  --EligibleCandidateNameListByClass
     local NumGroupMembers = self.isRaid and 40 or 4
+    MasterLoot:LevelDebug(2, format("NumGroupMembers is <%s>. ", tostring(NumGroupMembers)))
     for i = 1, NumGroupMembers do
-        local  RRName, _, _, _, RRClass, RRFileName, _, _ = GetRaidRosterInfo(i)
+        local  RRName, _, _, _, RRClass, RRFileName
+
+        if self.isRaid then
+            RRName, _, _, _, RRClass, RRFileName, _, _ = GetRaidRosterInfo(i)
+        else
+            RRName = UnitName(self.prefix..i)
+            RRClass, RRFileName = UnitClass(self.prefix..i)
+        end
+
         if RRName then
-            --MasterLoot:LevelDebug(2, format("RRName is <%s>. RRfileName is <%s>. RRclass is <%s>", tostring(RRName), tostring(RRFileName), tostring(RRClass)))
+            print(RRName)
+            MasterLoot:LevelDebug(2, format("RRName is <%s>. RRfileName is <%s>. RRclass is <%s>", tostring(RRName), tostring(RRFileName), tostring(RRClass)))
             CON[RRName] = { RRFileName, RRClass }
         end
-    end
-    -- ADD player if is in party
+        end
+     --ADD player if is in party
     if not self.isRaid then
         CON[self.playerName] = {self.playerFileName, self.playerClass}
+
     end
     for _, cn in ipairs(CandidateNameList) do
         local cfn = CON[cn][1] --CandidateFileName
         local cc = CON[cn][2]  --CandidateClass
+        --MasterLoot:LevelDebug(2, format("Reform ECNLBC CandidateName is <%s>. ", tostring(i)))
         --MasterLoot:LevelDebug(2, format("Reform ECNLBC CandidateName is <%s>. ", tostring(cn)))
         --MasterLoot:LevelDebug(2, format("Reform ECNLBC CandidateFileName is <%s>. ", tostring(cfn)))
         --MasterLoot:LevelDebug(2, format("Reform ECNLBC CandidateClass is <%s>. ", tostring(cc)))
@@ -231,10 +241,11 @@ end
 function MasterLootFrame:GLTC(mode, CandidateName, ColorfulName, ColorfulClassName,LootIndex)
     --targetRosterIndex
     local ss = LootIndex and LootIndex or LootFrame.selectedSlot
-    local _, _, quantity, _ = GetLootSlotInfo(ss)
+    local _, _, quantity, quality = GetLootSlotInfo(ss)
     local link = GetLootSlotLink(ss)
     local message
-    if mode==L["偷偷分给"] then GiveMasterLoot(ss, CandidateName) return end
+
+    if mode==L["偷偷分给"] then GiveMasterLoot(ss, self:GetMLCI(CandidateName)) return end
 
     if not ColorfulName or not ColorfulClassName then
         message = string.format("%s  %s",
@@ -256,9 +267,9 @@ function MasterLootFrame:GLTC(mode, CandidateName, ColorfulName, ColorfulClassNa
         )
 
     end
-        if quality > 2 then
-            SendChatMessage(message, self.channelChat)
-        end
+    if quality > 2 then
+        SendChatMessage(message, self.channelChat)
+    end
     local MLCI = self:GetMLCI(CandidateName)
     if MLCI then
         GiveMasterLoot(ss, MLCI)
