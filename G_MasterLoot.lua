@@ -55,7 +55,7 @@ MasterLoot.options = {
 }
 function MasterLoot:OnInitialize()
     self:SetDebugLevel(3)
-    self:SetDebugging(true)
+    --self:SetDebugging(true)
     self:RegisterDB("MasterLootDB")
     self:RegisterDefaults("profile", {
         PriorityList = {},
