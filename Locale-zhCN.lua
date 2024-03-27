@@ -1,7 +1,7 @@
 
 local L = AceLibrary("AceLocale-2.2"):new("MasterLoot")
 L:RegisterTranslations("zhCN", function() return {
-	["小皮箱队长分配助手"] = "|cffF5F54A[小皮箱]|r|cff9482C9团队分配助手|r",
+	["小皮箱队团队助手"] = "|cffF5F54A[小皮箱]|r|cff9482C9团队助手|r",
 	["已加载"] ="已加载",
 	["已开启"] ="已开启",
 	["已关闭"] ="已关闭",
@@ -9,8 +9,8 @@ L:RegisterTranslations("zhCN", function() return {
 	["通通归我"]="通通归我",
 	["通通归我描述"]="打开/关闭 灰色物品都是我的",
 
-	["随机分配"]="随机分配",
-	["随机分配描述"]="打开/关闭 灰色物品随机分配",
+	["见者有份"]="见者有份",
+	["见者有份描述"]="打开/关闭 灰色物品随机分配",
 
 	["添加目标"] = "添加目标",
 	["添加目标描述"] = "添加目标到快捷分配",
@@ -28,14 +28,15 @@ L:RegisterTranslations("zhCN", function() return {
 
 
 
-	["开始ROLL"] = "|cffF5F54A》》》|r%s|cffF5F54A《《《|r 1许愿 2需求 3贪婪",
+	["开始ROLL"] = "|cffF5F54A》》》|r%s|cffF5F54A《《《|r 许愿打|cffffffff[1]|r 需求打|cffffffff[2]|r 贪婪打|cffffffff[3]|r",
 	["偷偷分给"] = "偷偷分给",
 	["自己"] = "自己",
 
-	["全团随机分配"] = "全团随机分配",
-	["全团随机获胜"] = "全团随机分配 恭喜 [%s] %s 获得 %s",
-	["定向获胜"] = "恭喜 [%s] %s 获得 %s",
+	["随机分配"] = "随机分配",
+	["随机分配获胜"] = "随机分配 恭喜 |cffF5F54A[%s]|r 获得 %s*|cffF5F54A%s|r",
+	["分给"] = "ROLL最高 恭喜 [%s]%s 获得 %s*|cffF5F54A%s|r",
 	["没有拾取权"] = "没有拾取权",
+	["无法分配"] = "错误 无法分配 %s 给|cffF5F54A[%s]|r 请确认目标是否有拾取权 否则请改自由拾取",
 	font = "Fonts\\FRIZQT__.TTF"
 } end)
 

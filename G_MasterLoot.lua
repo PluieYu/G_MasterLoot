@@ -24,8 +24,8 @@ MasterLoot.options = {
         },
         AutoRRToggle = {
             type = "toggle",
-            name = L["随机分配"],
-            desc = L["随机分配描述"],
+            name = L["见者有份"],
+            desc = L["见者有份描述"],
             order = 2,
             get = function() return MasterLoot:GetAutoRR() end,
             set = function() MasterLoot:SetAutoRR() end,
@@ -55,7 +55,7 @@ MasterLoot.options = {
 }
 function MasterLoot:OnInitialize()
     self:SetDebugLevel(3)
-    --self:SetDebugging(true)
+    self:SetDebugging(true)
     self:RegisterDB("MasterLootDB")
     self:RegisterDefaults("profile", {
         PriorityList = {},
@@ -65,7 +65,7 @@ function MasterLoot:OnInitialize()
     self:OnProfileEnable()
     self.OnMenuRequest = MasterLoot.options
     self:RegisterChatCommand({"/ML", "/MasterLoot"}, MasterLoot.options)
-    DEFAULT_CHAT_FRAME:AddMessage(string.format("%s : %s", L["小皮箱队长分配助手"], L["已加载"]))
+    DEFAULT_CHAT_FRAME:AddMessage(string.format("%s : %s", L["小皮箱队团队助手"], L["已加载"]))
 end
 
 function MasterLoot:OnProfileEnable()
@@ -73,7 +73,8 @@ function MasterLoot:OnProfileEnable()
 end
 
 function MasterLoot:OnEnable()
-    MasterLootFrame.playerName = UnitName("player")
+    MasterLoot.MLF = MasterLootFrame
+    self.MLF:OnEnable()
     self:Hook("LootFrame_OnEvent","OnEvent", true)
 end
 
@@ -83,19 +84,24 @@ function MasterLoot:OnEvent(event)
         return self.hooks.LootFrame_OnEvent(event)
     end
 
-    MasterLootFrame.isRaid =  GetNumRaidMembers() > 0 and true or false
-    MasterLootFrame.prefix =  MasterLootFrame.isRaid  and "raid" or "party"
-    MasterLootFrame.channelChat = MasterLootFrame.isRaid and "RAID" or "PARTY"
+    self.MLF.isRaid =  GetNumRaidMembers() > 0 and true or false
+    self.MLF.prefix =  self.MLF.isRaid  and "raid" or "party"
+    self.MLF.channelChat = self.MLF.isRaid and "RAID" or "PARTY"
     if event == "LOOT_OPENED"  then
-        if self.opt.AutoLoot or self.opt.AutoRR then
-            MasterLoot:LevelDebug(2,
-                    format("ENABLE AUTO FUNC"))
-            MasterLootFrame:AutoFunction()
+        for li = 1, GetNumLootItems() do
+            local _, _, quantity, quality = GetLootSlotInfo(li)
+            if quantity ~= 0 and quality < 2 then
+                if  self.opt.AutoLoot then
+                    self.MLF:GLTC(L["偷偷分给"], self.MLF.playerName,nil, nil)
+                elseif self.opt.AutoRR then
+                    self.MLF:GetRandomCandidate(li)
+                end
+            end
         end
     elseif event == "OPEN_MASTER_LOOT_LIST" then
-        return MasterLootFrame:SetupFrame()
+        return self.MLF:SetupFrame()
     elseif event == "UPDATE_MASTER_LOOT_LIST" then
-        return MasterLootFrame.DropDown:Refresh(1)
+        return self.MLF.DropDown:Refresh(1)
     end
     collectgarbage()
     return self.hooks.LootFrame_OnEvent(event)
@@ -106,6 +112,15 @@ function MasterLoot:OnDisable()
     self:UnregisterAllEvents()
 end
 
+
+function MasterLoot:GetClassHex(fileName, class, name)
+    local ColorfulName, ColorfulClassName = nil, nil
+    local c = RAID_CLASS_COLORS[fileName]
+    local classHex = string.format("%2x%2x%2x", c.r*255, c.g*255, c.b*255)
+    if name then ColorfulName = string.format("|cff%s%s|r", classHex,  name) end
+    if class then ColorfulClassName = string.format("|cff%s%s|r", classHex,  class) end
+    return classHex, ColorfulClassName, ColorfulName
+end
 
 ------------------------------------------
 ---Option function
@@ -129,7 +144,7 @@ function MasterLoot:SetAutoRR()
     if self.opt.AutoRR and self.opt.AutoLoot then
         self.opt.AutoLoot = not self.opt.AutoLoot
     end
-    local message = string.format("%s:%s", L["随机分配"], self.opt.AutoRR==true and L["已开启"] or L["已关闭"] )
+    local message = string.format("%s:%s", L["见者有份"], self.opt.AutoRR==true and L["已开启"] or L["已关闭"] )
     self:Print(message)
 end
 
