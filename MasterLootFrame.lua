@@ -213,7 +213,6 @@ function MasterLootFrame:ReformECNLBC(CandidateNameList)
         end
 
         if RRName then
-            print(RRName)
             MasterLoot:LevelDebug(2, format("RRName is <%s>. RRfileName is <%s>. RRclass is <%s>", tostring(RRName), tostring(RRFileName), tostring(RRClass)))
             CON[RRName] = { RRFileName, RRClass }
         end
