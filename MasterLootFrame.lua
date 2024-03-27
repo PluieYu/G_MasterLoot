@@ -234,7 +234,7 @@ function MasterLootFrame:GLTC(mode, CandidateName, ColorfulName, ColorfulClassNa
     local _, _, quantity, _ = GetLootSlotInfo(ss)
     local link = GetLootSlotLink(ss)
     local message
-    if mode==L["偷偷分给"] then GiveMasterLoot(ss, targetMLCIndex) return end
+    if mode==L["偷偷分给"] then GiveMasterLoot(ss, CandidateName) return end
 
     if not ColorfulName or not ColorfulClassName then
         message = string.format("%s  %s",
@@ -256,9 +256,9 @@ function MasterLootFrame:GLTC(mode, CandidateName, ColorfulName, ColorfulClassNa
         )
 
     end
-        --if quality > 2 then
-        SendChatMessage(message, self.channelChat)
-        --end
+        if quality > 2 then
+            SendChatMessage(message, self.channelChat)
+        end
     local MLCI = self:GetMLCI(CandidateName)
     if MLCI then
         GiveMasterLoot(ss, MLCI)
