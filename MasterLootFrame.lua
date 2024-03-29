@@ -237,7 +237,7 @@ function MasterLootFrame:ReformECNLBC(CandidateNameList)
     return ECNLBC, CON
 end
 -- GiveLootToCandidate GiveLootToCandidate --
-function MasterLootFrame:GLTC(mode, CandidateName, ColorfulName, ColorfulClassName,LootIndex)
+function MasterLootFrame:GLTC(mode, CandidateName, ColorfulName, ColorfulClassName, LootIndex)
     --targetRosterIndex
     local ss = LootIndex and LootIndex or LootFrame.selectedSlot
     local _, _, quantity, quality = GetLootSlotInfo(ss)
@@ -247,16 +247,15 @@ function MasterLootFrame:GLTC(mode, CandidateName, ColorfulName, ColorfulClassNa
     if mode==L["偷偷分给"] then GiveMasterLoot(ss, self:GetMLCI(CandidateName)) return end
 
     if not ColorfulName or not ColorfulClassName then
-        message = string.format("%s  %s",
-                L["小皮箱队团队助手"],
+        message = MasterLoot:BuildMessage(
                 string.format(tostring(mode),
                         tostring(CandidateName),
                         tostring(link),
-                        tostring( quantity)))
-
+                        tostring( quantity)
+                )
+        )
     else
-        message =  string.format("%s  %s",
-                L["小皮箱队团队助手"],
+        message = MasterLoot:BuildMessage(
                 string.format(tostring(mode),
                         tostring(ColorfulClassName),
                         tostring(ColorfulName),
@@ -264,7 +263,6 @@ function MasterLootFrame:GLTC(mode, CandidateName, ColorfulName, ColorfulClassNa
                         tostring( quantity)
                 )
         )
-
     end
     if quality > 2 then
         SendChatMessage(message, self.channelChat)
@@ -273,7 +271,7 @@ function MasterLootFrame:GLTC(mode, CandidateName, ColorfulName, ColorfulClassNa
     if MLCI then
         GiveMasterLoot(ss, MLCI)
     else
-        SendChatMessage(string.format("%s  %s",L["小皮箱队团队助手"],L["无法分配"]), self.channelChat)
+        SendChatMessage(MasterLoot:BuildMessage(L["无法分配"]), self.channelChat)
     end
 
 
@@ -284,23 +282,23 @@ function MasterLootFrame:GLTC(mode, CandidateName, ColorfulName, ColorfulClassNa
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
-function MasterLootFrame:AutoFunction()
-    for li = 1, GetNumLootItems() do
-        local _, name, quantity, quality = GetLootSlotInfo(li)
-        local UnitMLCIndec = GetMasterLootCandidateIndex(self.playerName)
-
-        if  quantity ~=0  then
-            MasterLoot:LevelDebug(2,
-                    format("GetLootSlotInfo: <%s // %s // %s>",
-                            tostring(name), tostring(quantity), tostring(quality)))
-            if  quality <= 1 then
-                if MasterLoot.opt.AutoLoot then
-                    self:GLTC(L["偷偷分给"],nil, UnitMLCIndec,nil,nil,li)
-                elseif MasterLoot.opt.AutoRR then
-                    self:GetEligibleCandidateIndexList()
-                    self:GiveLootToRandomCandidate(li)
-                end
-            end
-        end
-    end
-end
+--function MasterLootFrame:AutoFunction()
+--    for li = 1, GetNumLootItems() do
+--        local _, name, quantity, quality = GetLootSlotInfo(li)
+--        local UnitMLCIndec = GetMasterLootCandidateIndex(self.playerName)
+--
+--        if  quantity ~=0  then
+--            MasterLoot:LevelDebug(2,
+--                    format("GetLootSlotInfo: <%s // %s // %s>",
+--                            tostring(name), tostring(quantity), tostring(quality)))
+--            if  quality <= 1 then
+--                if MasterLoot.opt.AutoLoot then
+--                    self:GLTC(L["偷偷分给"],nil, UnitMLCIndec,nil,nil,li)
+--                elseif MasterLoot.opt.AutoRR then
+--                    self:GetEligibleCandidateIndexList()
+--                    self:GiveLootToRandomCandidate(li)
+--                end
+--            end
+--        end
+--    end
+--end

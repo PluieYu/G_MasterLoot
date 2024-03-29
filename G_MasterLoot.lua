@@ -16,7 +16,7 @@ MasterLoot.options = {
     args = {
         AutoLootToggle = {
             type = "toggle",
-            name = L["通通归我"],
+            name = L["通通归我"]    ,
             desc = L["通通归我描述"],
             order = 1,
             get = function() return  MasterLoot:GetAutoLoot() end,
@@ -55,6 +55,8 @@ MasterLoot.options = {
 }
 function MasterLoot:OnInitialize()
     self:SetDebugLevel(3)
+    self.Prefix =
+    "|cffF5F54A["..base64:dec("5bCP55qu566x").."]|r|cff9482C9"..base64:dec("5Zui6Zif5Yqp5omL").."|r"
     --self:SetDebugging(true)
     self:RegisterDB("MasterLootDB")
     self:RegisterDefaults("profile", {
@@ -65,7 +67,7 @@ function MasterLoot:OnInitialize()
     self:OnProfileEnable()
     self.OnMenuRequest = MasterLoot.options
     self:RegisterChatCommand({"/ML", "/MasterLoot"}, MasterLoot.options)
-    DEFAULT_CHAT_FRAME:AddMessage(string.format("%s : %s", L["小皮箱队团队助手"], L["已加载"]))
+    DEFAULT_CHAT_FRAME:AddMessage(self:BuildMessage(L["已加载"]))
 end
 
 function MasterLoot:OnProfileEnable()
@@ -89,9 +91,9 @@ function MasterLoot:OnEvent(event)
     self.MLF.channelChat = self.MLF.isRaid and "RAID" or "PARTY"
     if event == "LOOT_OPENED"  then
         for li = 1, GetNumLootItems() do
-            local _, _, quantity, quality = GetLootSlotInfo(li)
+            local _, name, quantity, quality = GetLootSlotInfo(li)
             if quantity ~= 0 and quality < 2 then
-                if  self.opt.AutoLoot then
+                if  self.opt.AutoLoot or self:IsReserved(name) then
                     self.MLF:GLTC(L["偷偷分给"], self.MLF.playerName,nil, nil)
                 elseif self.opt.AutoRR then
                     self.MLF:GetRandomCandidate(li)
@@ -112,7 +114,6 @@ function MasterLoot:OnDisable()
     self:UnregisterAllEvents()
 end
 
-
 function MasterLoot:GetClassHex(fileName, class, name)
     local ColorfulName, ColorfulClassName = nil, nil
     local c = RAID_CLASS_COLORS[fileName]
@@ -121,7 +122,17 @@ function MasterLoot:GetClassHex(fileName, class, name)
     if class then ColorfulClassName = string.format("|cff%s%s|r", classHex,  class) end
     return classHex, ColorfulClassName, ColorfulName
 end
-
+function MasterLoot:BuildMessage(TEXT, args1, args2 )
+    local subMsg
+    if args2 then
+        subMsg = format(TEXT, args1, args2)
+    elseif args1 then
+        subMsg = format(TEXT, args1)
+    else
+        subMsg = TEXT
+    end
+    return format("%s %s", self.Prefix, subMsg)
+end
 ------------------------------------------
 ---Option function
 ------------------------------------------
