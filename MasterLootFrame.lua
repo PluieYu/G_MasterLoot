@@ -31,9 +31,10 @@ function MasterLootFrame:CreateFrame(level, value)
     if level == 1 then
         ------------------------------------
         self:CreateItem()
+        self:AddReservedItem()
         ------------------------------------
         self:CreateUnitDropDown()
-        for _, su in ipairs(MasterLoot.opt.PriorityList) do
+        for su, _ in pairs(MasterLoot.opt.ReservedPlayerList) do
             self:CreateUnitDropDown(su)
         end
         ------------------------------------
@@ -62,6 +63,41 @@ function MasterLootFrame:CreateItem()
                         self:StartRoll(LootSlotLink)
                     end)
 end
+function MasterLootFrame:AddReservedItem(inputName)
+    local icon, name, _, quality = GetLootSlotInfo(LootFrame.selectedSlot) --quantity
+    local LootSlotLink = GetLootSlotLink(LootFrame.selectedSlot)
+    local link = LinkToID(LootSlotLink)
+    inputName = not inputName and self.playerName or inputName
+    if not tContainsKey(MasterLoot.opt.ReservedItemList, name) then
+        self.DropDown:AddLine(
+                'text', string.format("%s %s%s|r", L["添加物品"], ITEM_QUALITY_COLORS[quality].hex, name),
+                --'icon', "Interface\\GossipFrame\\VendorGossipIcon",
+                'icon', icon,
+                'iconWidth', 20,
+                'iconHeight', 20,
+                'closeWhenClicked', true,
+                'tooltipFunc', GameTooltip.SetHyperlink,
+                'tooltipArg1', GameTooltip ,
+                'tooltipArg2', link,
+                'func', function()
+                    MasterLoot.opt.ReservedItemList[name] = link
+                end)
+    else
+        self.DropDown:AddLine(
+                'text', string.format("%s %s%s|r", L["移除物品"], ITEM_QUALITY_COLORS[quality].hex, name),
+                'icon', icon,
+                'iconWidth', 20,
+                'iconHeight', 20,
+                'closeWhenClicked', true,
+                'tooltipFunc', GameTooltip.SetHyperlink,
+                'tooltipArg1', GameTooltip ,
+                'tooltipArg2', link,
+                'func', function()
+                    MasterLoot.opt.ReservedItemList[name] = nil
+                end)
+    end
+    end
+
 function MasterLootFrame:CreateUnitDropDown(inputName)
     local UnitNameText = inputName and inputName or L["自己"]
     inputName = not inputName and self.playerName or inputName
@@ -158,6 +194,7 @@ end
 
 -- get uniteIndex like raid..i --
 function MasterLootFrame:GetRI(name)
+    self.prefix =  self.isRaid  and "raid" or "party"
     if self.playerName == name then return "player" end
     local NumGroupMembers = self.isRaid and 40 or 4
     for i = 1, NumGroupMembers do
@@ -191,8 +228,10 @@ function MasterLootFrame:GetECNL()
     end
     -- add player name if in party
     if not self.isRaid then
-        table.insert(ECNL, self.playerName)
-        count = count +1
+        if not tContains(ECNL, self.playerName) then
+            table.insert(ECNL, self.playerName)
+            count = count +1
+        end
     end
     return ECNL, count
 end
@@ -264,7 +303,7 @@ function MasterLootFrame:GLTC(mode, CandidateName, ColorfulName, ColorfulClassNa
                 )
         )
     end
-    if quality > 2 then
+    if quality > MasterLoot.opt.ItemQuality then
         SendChatMessage(message, self.channelChat)
     end
     local MLCI = self:GetMLCI(CandidateName)

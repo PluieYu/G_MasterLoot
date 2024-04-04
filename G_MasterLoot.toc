@@ -10,4 +10,6 @@
 ## LoadOnDemand: 0
 Locale-zhCN.lua
 MasterLootFrame.lua
+MasterLootOptionFrame.lua
 G_MasterLoot.lua
+base64.lua
