@@ -11,20 +11,21 @@ MasterLootOptionFrame = {}
 function MasterLootOptionFrame:OnInitialize()
     self.EIL = AceLibrary("Dewdrop-2.0")     --ExtraItemList
     self.EPL = AceLibrary("Dewdrop-2.0")     --ExtraPlayerList
-    --self.Frame = self:SetupFrame()
 end
-
-function MasterLootOptionFrame:SetupEILFrame(nameText, valueTable)
+function MasterLootOptionFrame:SetupEILFrame()
     self.EIL:Open(
             UIParent,
             'children',
             function(level, value)
-                self:CreateEILFrame(level, value, nameText, valueTable)
+                self:CreateEILFrame(level, value)
             end,
-            'cursorX', 1,
-            'cursorY', 1
+            'cursorX', nil,
+            'cursorY', true,
+            'point',"CENTER",
+            'relativePoint', "CENTER"
     )
 end
+
 function MasterLootOptionFrame:CreateEILFrame(level, value)
     if level == 1 then
         self.EIL:AddLine(
@@ -77,16 +78,17 @@ function MasterLootOptionFrame:CreateEILFrame(level, value)
 
     end
 end
-
-function MasterLootOptionFrame:SetupEPLFrame(nameText, valueTable)
+function MasterLootOptionFrame:SetupEPLFrame()
     self.EPL:Open(
             UIParent,
             'children',
             function(level, value)
-                self:CreateEPLFrame(level, value, nameText, valueTable)
+                self:CreateEPLFrame(level, value)
             end,
-            'cursorX', 1,
-            'cursorY', 1
+            'cursorX', nil,
+            'cursorY', true,
+            'point',"CENTER",
+            'relativePoint', "CENTER"
     )
 end
 function MasterLootOptionFrame:CreateEPLFrame(level, value)
@@ -148,17 +150,4 @@ function MasterLootOptionFrame:CreateEPLFrame(level, value)
                 end)
 
     end
-end
-
-
-
-
-
-function MasterLootOptionFrame:ResetFramePosition()
-    self.Frame:ClearAllPoints()
-    self.Frame:SetPoint("CENTER", UIParent, "CENTER")
-    MasterLoot.opt.posx = nil
-    MasterLoot.opt.posy = nil
-    MasterLoot.opt.point = "CENTER"
-    MasterLoot.opt.relativePoint = "CENTER"
 end

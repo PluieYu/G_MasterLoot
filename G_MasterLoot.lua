@@ -251,7 +251,7 @@ function MasterLoot:SetItemQuality(level)
 end
 --值钱物品--
 function MasterLoot:ShowExtraItemList()
-        self.MLOF:SetupEILFrame(L["值钱的物品"], self.opt.ReservedItemList)
+        self.MLOF:SetupEILFrame()
 end
 function MasterLoot:CleanExtraItemList()
     wipe(MasterLoot.opt.ReservedItemList)
@@ -266,7 +266,7 @@ end
 
 --快捷分配--
 function MasterLoot:ShowExtraPlayerList()
-    self.MLOF:SetupEPLFrame(L["快捷分配列表"], self.opt.ReservedPlayerList)
+    self.MLOF:SetupEPLFrame()
 end
 function MasterLoot:CleanExtraPlayerList()
     wipe(MasterLoot.opt.ReservedPlayerList)
@@ -302,7 +302,6 @@ function tContains(table, item)
     end
     return nil;
 end
-
 function tContainsKey(table, item)
     for k, _ in pairs(table) do
         if  k == item then
