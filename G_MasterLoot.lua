@@ -40,8 +40,8 @@ function  MasterLoot:OnInitializeOption()
         args = {
             ExtraMode = {
                 type = "group",
-                name = "额外拾取模式",
-                desc = "额外拾取模式描述",
+                name = L["额外拾取模式"] ,
+                desc = L["额外拾取模式描述"] ,
                 order =1,
                 args = {
                     AutoLootToggle = {
