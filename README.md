@@ -5,10 +5,10 @@
 ### 或者已经安装了整合版的 !Libs
 
 下载 zip 格式文件
-下载地址 https://github.com/PluieYu/G_SummonHelper/archive/refs/heads/main.zip
+下载地址 https://github.com/PluieYu/G_MasterLoot/archive/refs/heads/main.zip
 
-解压 G_NasterLoot-main.zip 到 interface/Addons/ 
-重命名 G_NasterLoot-main 到 G_NasterLoot 即可
+解压 G_MasterLoot-main.zip 到 interface/Addons/ 
+重命名 G_MasterLoot-main 到 G_MasterLoot 即可
 
 Locale 里的文字描述可以按照喜好随意修改 但一定要保留 %s
 
