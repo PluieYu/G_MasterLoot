@@ -178,7 +178,7 @@ function MasterLoot:OnEvent(event)
     elseif event == "OPEN_MASTER_LOOT_LIST" then
         return self.MLF:SetupFrame()
     elseif event == "UPDATE_MASTER_LOOT_LIST" then
-        return self.MLF.DropDown:Refresh(1)
+        return self.MLF:Refresh()
     end
     collectgarbage()
     return self.hooks.LootFrame_OnEvent(event)

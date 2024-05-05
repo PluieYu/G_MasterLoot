@@ -160,6 +160,9 @@ function MasterLootFrame:CreateClassListPlayerDropDown(value)
                 end)
     end
 end
+function MasterLootFrame:Refresh()
+    self.DropDown:Refresh()
+end
 ----------------------------------------------------------------------
 function LinkToID(link)
     if not link then return nil end
@@ -262,16 +265,18 @@ function MasterLootFrame:ReformECNLBC(CandidateNameList)
 
     end
     for _, cn in ipairs(CandidateNameList) do
-        local cfn = CON[cn][1] --CandidateFileName
-        local cc = CON[cn][2]  --CandidateClass
-        --MasterLoot:LevelDebug(2, format("Reform ECNLBC CandidateName is <%s>. ", tostring(i)))
-        --MasterLoot:LevelDebug(2, format("Reform ECNLBC CandidateName is <%s>. ", tostring(cn)))
-        --MasterLoot:LevelDebug(2, format("Reform ECNLBC CandidateFileName is <%s>. ", tostring(cfn)))
-        --MasterLoot:LevelDebug(2, format("Reform ECNLBC CandidateClass is <%s>. ", tostring(cc)))
-        if not ECNLBC[cfn] then
-            ECNLBC[cfn] = {}
+        if CON[cn] then
+            local cfn = CON[cn][1] --CandidateFileName
+            local cc = CON[cn][2]  --CandidateClass
+            --MasterLoot:LevelDebug(2, format("Reform ECNLBC CandidateName is <%s>. ", tostring(i)))
+            --MasterLoot:LevelDebug(2, format("Reform ECNLBC CandidateName is <%s>. ", tostring(cn)))
+            --MasterLoot:LevelDebug(2, format("Reform ECNLBC CandidateFileName is <%s>. ", tostring(cfn)))
+            --MasterLoot:LevelDebug(2, format("Reform ECNLBC CandidateClass is <%s>. ", tostring(cc)))
+            if not ECNLBC[cfn] then
+                ECNLBC[cfn] = {}
+            end
+            table.insert(ECNLBC[cfn],  {cn, cc, cfn})
         end
-        table.insert(ECNLBC[cfn],  {cn, cc, cfn})
     end
     return ECNLBC, CON
 end

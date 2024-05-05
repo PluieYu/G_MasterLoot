@@ -4,7 +4,7 @@
 ## Title-zhCN:|CFFF5F54A[小皮箱]|R|CFF9482C9[团队]|R|cffF5F54A助手
 ## Notes-zhCN:|CFFFF8080这是专门为小皮箱定制的队长分配助手。
 ## Author: YU
-## Version: 1.0.0
+## Version: 1.0.1
 ## SavedVariables: MasterLootDB
 ## DefaultState: Enabled
 ## LoadOnDemand: 0

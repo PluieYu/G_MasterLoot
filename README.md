@@ -24,3 +24,6 @@ Locale 里的文字描述可以按照喜好随意修改 但一定要保留 %s
 可以添加物品到不分配的列表来避免随机分配
 小地图右键插件图标可进行设置
 
+### update 1.01 bug fix looting issue when raid member leave raid
+
+
